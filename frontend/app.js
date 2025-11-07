@@ -4,8 +4,6 @@ const API_URL = 'http://localhost:8001';
 // ==================== STATE ====================
 let chatHistory = [];
 let currentConversationId = null;
-let lastResponseTime = null;
-let lastCacheHit = false;
 
 // ==================== DOM ELEMENTS ====================
 const elements = {
@@ -15,7 +13,6 @@ const elements = {
     userInput: document.getElementById('userInput'),
     sendButton: document.getElementById('sendButton'),
     welcome: document.getElementById('welcome'),
-    perfBadge: document.getElementById('perfBadge'),
     themeText: document.getElementById('themeText'),
     conversationHistory: document.getElementById('conversationHistory')
 };
@@ -30,9 +27,6 @@ function init() {
 
     // Focus input
     elements.userInput.focus();
-
-    // Check API health
-    checkAPIHealth();
 }
 
 // ==================== THEME MANAGEMENT ====================
@@ -243,9 +237,6 @@ function newChat() {
     // Show welcome screen
     showWelcomeScreen();
 
-    // Clear performance badge
-    elements.perfBadge.innerHTML = '';
-
     // Reset input
     elements.userInput.value = '';
     autoResize(elements.userInput);
@@ -303,15 +294,6 @@ function showWelcomeScreen() {
     elements.chatMessages.innerHTML = welcomeHTML;
 }
 
-// ==================== API FUNCTIONS ====================
-async function checkAPIHealth() {
-    try {
-        const response = await fetch(`${API_URL}/health`);
-        const data = await response.json();
-    } catch (error) {
-    }
-}
-
 // ==================== MESSAGE HANDLING ====================
 function handleKeyPress(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -346,9 +328,7 @@ async function sendMessage() {
     elements.userInput.value = '';
     autoResize(elements.userInput);
 
-    const startTime = Date.now();
     let currentAnswer = '';
-    let metadata = {};
     let statusDiv = null;
     let answerDiv = null;
 
@@ -392,17 +372,6 @@ async function sendMessage() {
         elements.chatMessages.appendChild(answerDiv);
         scrollToBottom();
 
-        // Store metadata
-        metadata = data.metadata || {};
-        lastResponseTime = data.processing_time || 0;
-        lastCacheHit = metadata.cache_hit || false;
-        // updatePerfBadge(); // Disabled
-
-        // Add metadata to answer (disabled)
-        // if (answerDiv && Object.keys(metadata).length > 0) {
-        //     addMetadataToMessage(answerDiv, metadata);
-        // }
-
         // Update history
         chatHistory.push(
             { role: 'user', content: question },
@@ -428,7 +397,7 @@ async function sendMessage() {
 }
 
 // ==================== UI HELPER FUNCTIONS ====================
-function addMessage(role, content, metadata = null) {
+function addMessage(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
 
@@ -440,11 +409,6 @@ function addMessage(role, content, metadata = null) {
     const avatar = role === 'user' ? '<div class="user-avatar">U</div>' : '<img src="givaudan-logo.png" class="logo-avatar" alt="Givaudan">';
     const roleName = role === 'user' ? 'Vous' : 'Assistant';
 
-    let metadataHTML = '';
-    if (metadata && Object.keys(metadata).length > 0) {
-        metadataHTML = createMetadataHTML(metadata);
-    }
-
     const formattedContent = role === 'assistant' ? formatMarkdown(content) : escapeHtml(content);
 
     messageDiv.innerHTML = `
@@ -455,7 +419,6 @@ function addMessage(role, content, metadata = null) {
                 <span class="message-time">${time}</span>
             </div>
             <div class="message-text">${formattedContent}</div>
-            ${metadataHTML}
         </div>
     `;
 
@@ -549,45 +512,6 @@ function formatMarkdown(text) {
     return html;
 }
 
-function addMetadataToMessage(messageDiv, metadata) {
-    const metadataHTML = createMetadataHTML(metadata);
-    const contentDiv = messageDiv.querySelector('.message-content');
-    if (contentDiv) {
-        contentDiv.innerHTML += metadataHTML;
-    }
-}
-
-function createMetadataHTML(metadata) {
-    const items = [];
-
-    if (metadata.cache_hit) {
-        items.push('<span class="metadata-item">Cache hit!</span>');
-    }
-
-    if (metadata.processing_time) {
-        const time = metadata.processing_time;
-        items.push(`<span class="metadata-item">${time.toFixed(2)}s</span>`);
-    }
-
-    if (metadata.num_actions !== undefined) {
-        items.push(`<span class="metadata-item">${metadata.num_actions} action${metadata.num_actions > 1 ? 's' : ''}</span>`);
-    }
-
-    if (metadata.tools_used && metadata.tools_used.length > 0) {
-        const toolNames = metadata.tools_used.map(t =>
-            t.replace('search_vector_database', 'VectorDB')
-             .replace('search_web', 'Web')
-        ).join(', ');
-        items.push(`<span class="metadata-item">${toolNames}</span>`);
-    }
-
-    if (items.length > 0) {
-        return `<div class="message-metadata">${items.join('')}</div>`;
-    }
-
-    return '';
-}
-
 function createStatusIndicator(message) {
     const statusDiv = document.createElement('div');
     statusDiv.className = 'status-indicator active';
@@ -600,22 +524,6 @@ function createTypingIndicator() {
     typingDiv.className = 'typing-indicator active';
     typingDiv.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
     return typingDiv;
-}
-
-function updatePerfBadge() {
-    if (lastResponseTime !== null) {
-        const cacheIndicator = lastCacheHit
-            ? '<span class="badge cached">Cached</span>'
-            : '<span class="badge">Search</span>';
-
-        const speedIndicator = lastResponseTime < 2
-            ? '<span class="badge fast">Ultra-fast</span>'
-            : lastResponseTime < 10
-            ? '<span class="badge fast">Fast</span>'
-            : '<span class="badge">' + lastResponseTime.toFixed(1) + 's</span>';
-
-        elements.perfBadge.innerHTML = cacheIndicator + speedIndicator;
-    }
 }
 
 function autoResize(textarea) {
