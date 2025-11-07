@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "mini-rag-givaudan"
+version = "2.0.0"
+description = "RAG system with Weaviate, Hybrid Search, and ReAct Agent"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+langchain = "^0.3.13"
+langchain-openai = "^0.2.14"
+langchain-community = "^0.3.13"
+langgraph = "^0.2.62"
+tiktoken = "^0.8.0"
+pypdf = "^5.1.0"
+python-docx = "^1.1.2"
+pymupdf = "^1.25.4"
+unstructured = "^0.18.2"
+python-magic = "^0.4.27"
+langchain-google-community = "^2.0.5"
+google-search-results = "^2.4.2"
+python-dotenv = "^1.0.1"
+colorlog = "^6.9.0"
+markdown = "^3.7"
+weaviate-client = "^4.17.0"
+sentence-transformers = "^5.1.2"
+fastapi = "^0.115.6"
+uvicorn = {extras = ["standard"], version = "^0.34.0"}
+pydantic = "^2.10.6"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+black = "^24.0.0"
+flake8 = "^7.0.0"
+mypy = "^1.8.0"
+fpdf2 = "^2.8.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+mini-rag = "main:main"
