@@ -11,33 +11,6 @@ A RAG (Retrieval-Augmented Generation) system for accessing Givaudan's knowledge
 - **FastAPI Backend**: Async REST API
 - **Modern Frontend**: Responsive UI with dark mode
 
-## Architecture Flow
-
-```
-User Query
-    ↓
-[Conversational Check] → Greeting? Return instant response
-    ↓
-[Semantic Cache] → Cache Hit? Return in < 2s
-    ↓ Cache Miss
-[ReAct Agent - LangChain]
-    ↓
-[Reasoning + Tool Selection]
-    ├─→ [Vector Database Tool] → Weaviate Hybrid Search
-    │   ↓
-    │   BM25 (40%) + Dense (60%) → Top 10 candidates
-    │   ↓
-    │   [Cross-Encoder Reranking] → Top 3 results
-    │
-    └─→ [Web Search Tool] → SerpAPI (for recent info)
-    ↓
-[LLM Generation with Context + Conversation History]
-    ↓
-[Cache Result] → Store for future similar queries
-    ↓
-Final Answer (with metadata)
-```
-
 ## Quick Start
 
 ### Prerequisites
@@ -95,8 +68,6 @@ python -m http.server 3000
 | Retrieval | Hybrid (BM25 + Dense) |
 | Reranking | ms-marco-MiniLM-L-6-v2 |
 | Agent | ReAct (LangChain) |
-| Caching | SQLite + Embeddings |
-| Web Search | SerpAPI |
 | API | FastAPI |
 | Frontend | Vanilla JS + CSS |
 
@@ -121,9 +92,8 @@ givaudan/
 ├── frontend/               # Web UI
 ├── src/                    # Core modules
 │   ├── react_agent.py     # ReAct agent
-│   ├── weaviate_rag_pipeline.py  # Hybrid search + reranking
-│   ├── semantic_cache.py  # Semantic caching
-│   ├── web_agent.py       # Web search
+│   ├── weaviate_rag_pipeline.py
+│   ├── semantic_cache.py
 │   └── ...
 ├── scripts/                # Utility scripts
 └── requirements.txt
@@ -141,6 +111,3 @@ AGENT_MAX_ITERATIONS = 5
 CACHE_SIMILARITY_THRESHOLD = 0.88
 ```
 
-## License
-
-MIT
